@@ -506,6 +506,21 @@
   }
   .phone-input-wrap input:focus { box-shadow: none !important; }
   .upload-zone.has-image { pointer-events: none; opacity: 0.6; }
+  /* Theme swatches */
+  .theme-swatches { display:flex; flex-wrap:wrap; gap:10px; margin-top:4px; }
+  .swatch {
+    width:38px; height:38px; border-radius:50%; cursor:pointer;
+    border:3px solid transparent; transition:all 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    position:relative;
+  }
+  .swatch:hover { transform:scale(1.15); }
+  .swatch.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.25); }
+  .swatch.active::after {
+    content:'✓'; position:absolute; inset:0; display:flex; align-items:center;
+    justify-content:center; color:white; font-size:0.8rem; font-weight:700;
+    text-shadow:0 1px 2px rgba(0,0,0,0.5);
+  }
   .auto-badge {
     background: var(--success-light); color: var(--success);
     font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 10px;
@@ -855,12 +870,83 @@
 
   <!-- ══ TAB: SETTINGS ══ -->
   <div id="tab-content-settings">
+
+    <!-- Date Format -->
     <div class="section-card">
       <div class="section-header">
-        <div class="section-icon" style="background:#f0fdf4">⚙</div>
+        <div class="section-icon" style="background:#fefce8">📅</div>
         <div>
-          <div class="section-title">Settings & Preferences</div>
-          <div class="section-subtitle">Customize your experience</div>
+          <div class="section-title">Date Format</div>
+          <div class="section-subtitle">How dates appear on your invoice</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field">
+            <label>Date Display Format</label>
+            <select id="setting-dateformat" onchange="saveSetting('dateFormat',this.value);previewDateFormat()">
+              <option value="DD/MM/YYYY">DD/MM/YYYY — 22/03/2026</option>
+              <option value="MM/DD/YYYY">MM/DD/YYYY — 03/22/2026</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD — 2026-03-22</option>
+              <option value="DD-MM-YYYY">DD-MM-YYYY — 22-03-2026</option>
+              <option value="D MMM YYYY">D MMM YYYY — 22 Mar 2026</option>
+              <option value="D MMMM YYYY">D MMMM YYYY — 22 March 2026</option>
+              <option value="MMM D, YYYY">MMM D, YYYY — Mar 22, 2026</option>
+            </select>
+            <div class="field-hint" id="date-format-preview" style="color:var(--accent);font-weight:600;font-size:0.85rem;margin-top:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoice Theme -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fdf4ff">🎨</div>
+        <div>
+          <div class="section-title">Invoice Theme</div>
+          <div class="section-subtitle">Colour of the header band in your invoice</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field">
+            <label>Header Background Colour</label>
+            <div class="theme-swatches" id="theme-swatches">
+              <!-- rendered by JS -->
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+              <label style="margin:0;font-weight:500;font-size:0.85rem;color:var(--ink-light)">Custom colour</label>
+              <input type="color" id="setting-custom-color" value="#1a1a2e"
+                oninput="applyThemeColor(this.value,null,true)"
+                style="width:44px;height:38px;padding:2px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none">
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Header Text / Accent Colour</label>
+            <div class="theme-swatches" id="accent-swatches"></div>
+          </div>
+        </div>
+        <!-- Live mini-preview -->
+        <div style="margin-top:12px">
+          <div class="field-hint" style="margin-bottom:8px">Preview</div>
+          <div id="theme-preview-bar" style="border-radius:10px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;transition:background 0.3s">
+            <span id="theme-preview-from" style="font-weight:700;font-size:1rem">Your Company</span>
+            <span id="theme-preview-inv" style="font-size:1.3rem;font-weight:800;letter-spacing:-0.02em">INVOICE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Defaults -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">📋</div>
+        <div>
+          <div class="section-title">Default Content</div>
+          <div class="section-subtitle">Pre-filled on every new invoice</div>
         </div>
       </div>
       <div class="section-body">
@@ -868,10 +954,12 @@
           <div class="field">
             <label>Default Currency</label>
             <select id="setting-currency" onchange="saveSetting('currency',this.value)">
-              <option value="₹">₹ Indian Rupee</option>
-              <option value="$">$ US Dollar</option>
-              <option value="€">€ Euro</option>
-              <option value="£">£ British Pound</option>
+              <option value="₹">₹ Indian Rupee (INR)</option>
+              <option value="$">$ US Dollar (USD)</option>
+              <option value="€">€ Euro (EUR)</option>
+              <option value="£">£ British Pound (GBP)</option>
+              <option value="AED">AED Dirham</option>
+              <option value="SGD">SGD Singapore Dollar</option>
             </select>
           </div>
         </div>
@@ -887,15 +975,28 @@
             <input type="text" id="setting-thankyou" placeholder="Thank you for your business!" oninput="saveSetting('thankyou',this.value)">
           </div>
         </div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+      </div>
+    </div>
+
+    <!-- Data & Account -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fff7ed">🔐</div>
         <div>
-          <p style="font-size:0.85rem;color:var(--ink-muted);margin-bottom:12px">Your User ID (for data isolation)</p>
-          <code id="user-id-display" style="font-size:0.8rem;background:var(--bg-soft);padding:8px 12px;border-radius:var(--radius-sm);display:block;word-break:break-all"></code>
+          <div class="section-title">Data & Account</div>
+          <div class="section-subtitle">Your local session and data management</div>
         </div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+      </div>
+      <div class="section-body">
+        <div style="margin-bottom:16px">
+          <p style="font-size:0.85rem;color:var(--ink-muted);margin-bottom:8px">Your Device ID (keeps your invoices separate)</p>
+          <code id="user-id-display" style="font-size:0.78rem;background:var(--bg-soft);padding:8px 12px;border-radius:var(--radius-sm);display:block;word-break:break-all;color:var(--ink-light)"></code>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
         <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑 Clear All Data</button>
       </div>
     </div>
+
   </div>
 
   </div><!-- /tabs-content -->
@@ -987,15 +1088,129 @@ function init() {
   setupAutoSave();
 }
 
+// ══════════════════════════════════════════════════
+// THEME COLOURS
+// ══════════════════════════════════════════════════
+const HEADER_SWATCHES = [
+  { color:'#1a1a2e', label:'Navy' },
+  { color:'#1e3a5f', label:'Dark Blue' },
+  { color:'#0f4c75', label:'Ocean' },
+  { color:'#1b5e20', label:'Forest' },
+  { color:'#4a148c', label:'Purple' },
+  { color:'#880e4f', label:'Maroon' },
+  { color:'#bf360c', label:'Rust' },
+  { color:'#212121', label:'Charcoal' },
+  { color:'#37474f', label:'Slate' },
+  { color:'#00695c', label:'Teal' },
+];
+const ACCENT_SWATCHES = [
+  { color:'#ffffff', label:'White' },
+  { color:'#fbbf24', label:'Gold' },
+  { color:'#60a5fa', label:'Sky' },
+  { color:'#34d399', label:'Mint' },
+  { color:'#f472b6', label:'Pink' },
+  { color:'#a78bfa', label:'Lavender' },
+  { color:'#fb923c', label:'Orange' },
+  { color:'#f1f5f9', label:'Silver' },
+];
+
+function renderSwatches() {
+  const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  const hc = s.themeHeader || '#1a1a2e';
+  const ac = s.themeAccent || '#ffffff';
+
+  const hWrap = document.getElementById('theme-swatches');
+  if (hWrap) hWrap.innerHTML = HEADER_SWATCHES.map(sw => `
+    <div class="swatch ${sw.color===hc?'active':''}" style="background:${sw.color}" title="${sw.label}"
+      onclick="applyThemeColor('${sw.color}',null,false)"></div>`).join('');
+
+  const aWrap = document.getElementById('accent-swatches');
+  if (aWrap) aWrap.innerHTML = ACCENT_SWATCHES.map(sw => `
+    <div class="swatch ${sw.color===ac?'active':''}" style="background:${sw.color};border-color:${sw.color==='#ffffff'?'#ccc':'transparent'}" title="${sw.label}"
+      onclick="applyThemeColor(null,'${sw.color}',false)"></div>`).join('');
+
+  const cc = document.getElementById('setting-custom-color');
+  if (cc) cc.value = hc;
+
+  updateThemePreview(hc, ac);
+}
+
+function applyThemeColor(header, accent, fromPicker) {
+  const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  if (header !== null) s.themeHeader = header;
+  if (accent  !== null) s.themeAccent  = accent;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  renderSwatches();
+}
+
+function updateThemePreview(hc, ac) {
+  const bar  = document.getElementById('theme-preview-bar');
+  const from = document.getElementById('theme-preview-from');
+  const inv  = document.getElementById('theme-preview-inv');
+  if (bar)  bar.style.background  = hc;
+  if (from) from.style.color = ac;
+  if (inv)  inv.style.color  = ac;
+}
+
+function getThemeColors() {
+  const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  return { header: s.themeHeader || '#1a1a2e', accent: s.themeAccent || '#ffffff' };
+}
+
+// ══════════════════════════════════════════════════
+// DATE FORMATTING
+// ══════════════════════════════════════════════════
+function formatDate(dateStr, fmt) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return dateStr;
+  const dd   = String(d.getDate()).padStart(2,'0');
+  const mm   = String(d.getMonth()+1).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthsFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  switch (fmt) {
+    case 'DD/MM/YYYY':  return `${dd}/${mm}/${yyyy}`;
+    case 'MM/DD/YYYY':  return `${mm}/${dd}/${yyyy}`;
+    case 'YYYY-MM-DD':  return `${yyyy}-${mm}-${dd}`;
+    case 'DD-MM-YYYY':  return `${dd}-${mm}-${yyyy}`;
+    case 'D MMM YYYY':  return `${d.getDate()} ${months[d.getMonth()]} ${yyyy}`;
+    case 'D MMMM YYYY': return `${d.getDate()} ${monthsFull[d.getMonth()]} ${yyyy}`;
+    case 'MMM D, YYYY': return `${months[d.getMonth()]} ${d.getDate()}, ${yyyy}`;
+    default:            return `${dd}/${mm}/${yyyy}`;
+  }
+}
+
+function getDateFormat() {
+  const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  return s.dateFormat || 'DD/MM/YYYY';
+}
+
+function previewDateFormat() {
+  const fmt = document.getElementById('setting-dateformat')?.value || 'DD/MM/YYYY';
+  const today = new Date().toISOString().split('T')[0];
+  const el = document.getElementById('date-format-preview');
+  if (el) el.textContent = '→ ' + formatDate(today, fmt);
+}
+
+// ══════════════════════════════════════════════════
+// SETTINGS LOAD
+// ══════════════════════════════════════════════════
 function loadSettings() {
   const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-  if (s.currency) document.getElementById('setting-currency').value = s.currency;
-  if (s.terms) document.getElementById('setting-terms').value = s.terms;
-  if (s.thankyou) document.getElementById('setting-thankyou').value = s.thankyou;
-  // Apply defaults to new invoice fields
-  if (s.terms && !document.getElementById('inv-terms').value) document.getElementById('inv-terms').value = s.terms;
-  if (s.thankyou && !document.getElementById('inv-thankyou').value) document.getElementById('inv-thankyou').value = s.thankyou;
-  if (s.currency) document.getElementById('inv-currency').value = s.currency;
+  const setV = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  setV('setting-currency', s.currency);
+  setV('setting-terms', s.terms);
+  setV('setting-thankyou', s.thankyou);
+  setV('setting-dateformat', s.dateFormat || 'DD/MM/YYYY');
+
+  // Apply to create form defaults if not already set
+  if (s.currency) setV('inv-currency', s.currency);
+  if (s.terms && !document.getElementById('inv-terms')?.value) setV('inv-terms', s.terms);
+  if (s.thankyou && !document.getElementById('inv-thankyou')?.value) setV('inv-thankyou', s.thankyou);
+
+  renderSwatches();
+  previewDateFormat();
 }
 
 function saveSetting(key, value) {
@@ -1237,13 +1452,28 @@ function showSaveIndicator(state_) {
 }
 
 // ══════════════════════════════════════════════════
-// PROGRESS
+// PROGRESS — weighted across all meaningful fields
 // ══════════════════════════════════════════════════
 function updateProgress() {
-  const fields = ['from-name','to-name','inv-number','inv-date'];
-  const filled = fields.filter(id => document.getElementById(id)?.value?.trim()).length;
-  const hasItems = document.querySelectorAll('#items-tbody tr').length > 0;
-  const pct = Math.round(((filled / fields.length) * 0.7 + (hasItems ? 0.3 : 0)) * 100);
+  const checks = [
+    !!document.getElementById('from-name')?.value?.trim(),           // company name
+    !!document.getElementById('from-phone')?.value?.trim(),          // your phone
+    !!document.getElementById('from-address')?.value?.trim(),        // your address
+    !!document.getElementById('to-name')?.value?.trim(),             // client name
+    !!document.getElementById('to-address')?.value?.trim(),          // client address
+    !!document.getElementById('inv-number')?.value?.trim(),          // invoice #
+    !!document.getElementById('inv-date')?.value?.trim(),            // date
+    (() => {                                                          // at least 1 item with desc+price
+      const rows = document.querySelectorAll('#items-tbody tr');
+      for (const r of rows) {
+        const inputs = r.querySelectorAll('input');
+        if (inputs[0]?.value?.trim() && parseFloat(inputs[3]?.value) > 0) return true;
+      }
+      return false;
+    })(),
+  ];
+  const filled = checks.filter(Boolean).length;
+  const pct = Math.round((filled / checks.length) * 100);
   document.getElementById('form-progress').style.width = pct + '%';
 }
 
@@ -1484,6 +1714,9 @@ function closePreview(e) {
 function buildInvoiceHTML(data) {
   const sym = data.currency || '₹';
   const items = data.items || [];
+  const theme = getThemeColors();
+  const dateFmt = getDateFormat();
+  const displayDate = formatDate(data.invDate, dateFmt);
 
   // Detect which optional columns have any data
   const hasHSN  = items.some(it => it.hsn && it.hsn.trim());
@@ -1509,11 +1742,6 @@ function buildInvoiceHTML(data) {
   const discAmt = sub * (data.overallDiscount || 0) / 100;
   const net = Math.max(0, sub - discAmt - (data.advance || 0));
   const amountWords = numToWords(net);
-
-  // Only show logo placeholder div if logo exists (keeps layout balanced)
-  const logoHTML = data.logoData
-    ? `<div class="inv-logo"><img src="${data.logoData}" alt="Logo"></div>`
-    : `<div></div>`;
 
   // Signature row: only render boxes that have content OR are always-needed
   const sigBoxes = [];
@@ -1544,12 +1772,12 @@ function buildInvoiceHTML(data) {
 
   return `
   <div id="inv-wrap">
-    <div class="inv-header">
-      ${logoHTML}
+    <div class="inv-header" style="background:${theme.header};padding:20px 24px;border-radius:10px 10px 0 0;margin:-0px">
+      ${data.logoData ? `<div class="inv-logo"><img src="${data.logoData}" alt="Logo" style="max-height:60px;max-width:140px;object-fit:contain"></div>` : `<div></div>`}
       <div class="inv-title-block">
-        <div class="inv-title">INVOICE</div>
-        <div class="inv-num"># ${data.invNumber || 'N/A'}</div>
-        <div class="inv-num" style="margin-top:4px">Date: ${data.invDate || ''}</div>
+        <div class="inv-title" style="color:${theme.accent}">INVOICE</div>
+        <div class="inv-num" style="color:${theme.accent};opacity:0.8"># ${data.invNumber || 'N/A'}</div>
+        <div class="inv-num" style="margin-top:4px;color:${theme.accent};opacity:0.7">Date: ${displayDate}</div>
       </div>
     </div>
     <hr class="inv-divider">
@@ -1617,13 +1845,26 @@ async function downloadPDF() {
     const PAGE_W = 210, M = 15;
     let y = M;
 
+    // Theme colors
+    const theme = getThemeColors();
+    const hexToRgb = h => {
+      const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);
+      return r ? [parseInt(r[1],16), parseInt(r[2],16), parseInt(r[3],16)] : [26,26,46];
+    };
+    const headerRgb = hexToRgb(theme.header);
+    const accentRgb = hexToRgb(theme.accent);
+
+    // Formatted date
+    const dateFmt = getDateFormat();
+    const displayDate = formatDate(data.invDate, dateFmt);
+
     // Detect optional columns
     const items = data.items || [];
     const hasHSN  = items.some(it => it.hsn && it.hsn.trim());
     const hasDisc = items.some(it => it.disc && it.disc > 0);
 
-    // Header bg
-    doc.setFillColor(26, 26, 46);
+    // Header bg — use theme color
+    doc.setFillColor(...headerRgb);
     doc.rect(0, 0, PAGE_W, 45, 'F');
 
     // Logo — only if uploaded
@@ -1631,16 +1872,18 @@ async function downloadPDF() {
       try { doc.addImage(data.logoData, 'PNG', M, 8, 35, 20, '', 'FAST'); } catch(e) {}
     }
 
-    // Invoice title (right)
-    doc.setTextColor(255, 255, 255);
+    // Invoice title (right) — use theme accent
+    doc.setTextColor(...accentRgb);
     doc.setFontSize(28);
     doc.setFont('helvetica', 'bold');
     doc.text('INVOICE', PAGE_W - M, 20, { align: 'right' });
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(180, 180, 200);
+    // slightly faded accent for subtext
+    const fade = accentRgb.map(c => Math.min(255, Math.round(c * 0.75 + 60)));
+    doc.setTextColor(...fade);
     doc.text(`# ${data.invNumber || 'N/A'}`, PAGE_W - M, 28, { align: 'right' });
-    doc.text(`Date: ${data.invDate || ''}`, PAGE_W - M, 34, { align: 'right' });
+    doc.text(`Date: ${displayDate}`, PAGE_W - M, 34, { align: 'right' });
 
     y = 55;
     // Parties — only print lines that exist
@@ -1738,8 +1981,8 @@ async function downloadPDF() {
         valign: 'middle',
       },
       headStyles: {
-        fillColor: [26, 26, 46],
-        textColor: [255, 255, 255],
+        fillColor: headerRgb,
+        textColor: accentRgb,
         fontStyle: 'bold',
         fontSize: 8.5,
         cellPadding: { top: 5, bottom: 5, left: 3, right: 3 },
@@ -1768,10 +2011,10 @@ async function downloadPDF() {
     addTotalRow('Subtotal', `${sym} ${fmtComma(sub)}`);
     if (data.overallDiscount > 0) addTotalRow(`Discount (${data.overallDiscount}%)`, `-${sym} ${fmtComma(discAmt)}`, false, [220,50,50]);
     if (data.advance > 0)         addTotalRow('Advance Paid', `-${sym} ${fmtComma(data.advance||0)}`, false, [22,163,74]);
-    // Grand total box
-    doc.setFillColor(26, 26, 46);
+    // Grand total box — themed
+    doc.setFillColor(...headerRgb);
     doc.roundedRect(totX - 4, y - 4, PAGE_W - M - totX + 8, 13, 2, 2, 'F');
-    doc.setTextColor(255, 200, 50);
+    doc.setTextColor(...accentRgb);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.text('Net Payable', totX + 1, y + 5);
